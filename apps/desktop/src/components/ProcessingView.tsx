@@ -49,7 +49,7 @@ export function ProcessingView({
       <div className="processing-top">
         <div>
           <span className="eyebrow">Обработка идёт</span>
-          <h1>Готовим документы встречи</h1>
+          <h1>Готовим материалы по встрече</h1>
           <p title={inputName}>{inputName}</p>
         </div>
         <div className="time-card">

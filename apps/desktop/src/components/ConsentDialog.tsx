@@ -42,9 +42,9 @@ export function ConsentDialog({
                   Обработка текста через DeepSeek
                 </Dialog.Title>
                 <Dialog.Description className="dialog-description">
-                  Аудио и видео останутся на этом компьютере. Во внешний API
+                  Аудио и видео останутся на этом компьютере. При согласии в API
                   будет отправлен только распознанный текст для сверки,
-                  редактирования и подготовки документов.
+                  редактирования и оформления документов.
                 </Dialog.Description>
                 <div className="privacy-row">
                   <LockKeyhole size={18} />

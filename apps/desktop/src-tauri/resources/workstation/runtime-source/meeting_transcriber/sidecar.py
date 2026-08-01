@@ -154,7 +154,7 @@ def system_status(*, start_ollama: bool = False) -> dict[str, Any]:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Meeting Documents job sidecar")
+    parser = argparse.ArgumentParser(description="Служебный процесс приложения «Материалы встреч»")
     commands = parser.add_subparsers(dest="command", required=True)
 
     launch = commands.add_parser("launch")

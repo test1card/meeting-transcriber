@@ -49,9 +49,9 @@ const STATUS_LABELS: Record<string, string> = {
 const FIT_LABELS: Record<string, string> = {
   recommended: "Отлично подходит",
   fits: "Подходит",
-  slow_offload: "Часть работы в RAM",
+  slow_offload: "Часть расчётов в оперативной памяти",
   unavailable: "Не подходит",
-  api: "Работает через API",
+  api: "Работает через внешний API",
 };
 
 const SETUP_STAGES: Record<string, string> = {
@@ -62,12 +62,12 @@ const SETUP_STAGES: Record<string, string> = {
   python: "Среды Python",
   models: "Загрузка моделей",
   verification: "Итоговая проверка",
-  complete: "Рабочая станция готова",
+  complete: "Компьютер готов к работе",
 };
 
 function packBadge(pack: WorkstationPack) {
-  if (pack.id === "deepseek-production") return "Лучшее качество API";
-  if (pack.id === "local-efficient") return "Рекомендуется локально";
+  if (pack.id === "deepseek-production") return "Лучшее качество через API";
+  if (pack.id === "local-efficient") return "Рекомендуемый локальный вариант";
   if (pack.id === "local-proven") return "Только черновик";
   return "Максимальная локальная";
 }
@@ -284,10 +284,10 @@ export function WorkstationSetupDialog({
                 <header className="workstation-header">
                   <div className="dialog-icon"><Gauge size={24} /></div>
                   <div>
-                    <Dialog.Title>Настройка рабочей станции</Dialog.Title>
+                    <Dialog.Title>Подготовка компьютера</Dialog.Title>
                     <Dialog.Description>
-                      Программа определила комплектующие и подобрала актуальные
-                      модели для русских совещаний.
+                      Программа определила характеристики компьютера и подобрала подходящие
+                      модели для русскоязычных совещаний.
                     </Dialog.Description>
                   </div>
                   <span className="catalog-date">
@@ -355,7 +355,7 @@ export function WorkstationSetupDialog({
                               {status.setup.reboot_required
                                 ? "Нужно перезагрузить Windows"
                                 : status.setup.status === "COMPLETE"
-                                  ? "Рабочая станция готова"
+                                  ? "Компьютер готов к работе"
                                   : status.setup.status === "PARTIAL"
                                     ? "\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430 \u0447\u0430\u0441\u0442\u0438\u0447\u043d\u043e"
                                   : status.setup.status === "FAILED"
@@ -410,9 +410,9 @@ export function WorkstationSetupDialog({
                             <div className="setup-section-heading">
                               <div>
                                 <span className="eyebrow">Шаг 1</span>
-                                <h2>Выберите профиль качества</h2>
+                                <h2>Выберите качество обработки</h2>
                               </div>
-                              <p>Речь и говорящие во всех профилях обрабатываются локально.</p>
+                              <p>Распознавание речи и определение говорящих выполняются на компьютере.</p>
                             </div>
                             <div className="pack-grid">
                               {packs.map((item) => (

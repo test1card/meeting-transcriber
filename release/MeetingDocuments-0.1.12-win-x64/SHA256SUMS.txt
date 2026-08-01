@@ -1,1 +1,1 @@
-f1405f9a3a4fb1a5113cd68f9d52530583f15b48b448b8991b4b7a76c976c7c7  Документы встречи_0.1.12_x64-setup.exe
+a580d5168f2ea6d052e89b1fac18386cae33d6cce4ff563ccd7dc5998ba932d2  Материалы встреч_0.1.12_x64-setup.exe

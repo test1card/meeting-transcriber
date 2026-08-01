@@ -80,8 +80,8 @@ export function HelpDialog({
 }) {
   const steps = [
     ["1", "Добавьте запись", "Перетащите аудио или видео длительностью до 5 часов."],
-    ["2", "Выберите обработку", "DeepSeek быстрее; локальный режим не отправляет текст наружу."],
-    ["3", "Получите Word", "Готовые документы сохранятся в выбранную папку."],
+    ["2", "Выберите обработку", "DeepSeek обычно работает быстрее; в локальном режиме текст остаётся на компьютере."],
+    ["3", "Получите документы Word", "Готовые документы сохранятся в выбранную папку."],
   ];
   const documents = [
     ["Протокол", "решения, поручения, сроки и ответственные"],
@@ -94,7 +94,7 @@ export function HelpDialog({
       open={open}
       onOpenChange={onOpenChange}
       icon={<BookOpen size={24} />}
-      title="Как подготовить документы"
+      title="Как обработать запись"
       description="Программа распознаёт русскую речь, учитывает отдельные английские слова и обязательно разделяет участников."
       wide
     >
@@ -106,7 +106,7 @@ export function HelpDialog({
           </div>
         ))}
       </div>
-      <div className="support-section-title"><FileText size={16} /> Что будет создано</div>
+      <div className="support-section-title"><FileText size={16} /> Что получится</div>
       <div className="help-documents">
         {documents.map(([title, text]) => (
           <div key={title}><Check size={15} /><span><strong>{title}</strong>{text}</span></div>
@@ -114,7 +114,7 @@ export function HelpDialog({
       </div>
       <div className="support-note">
         <Users size={17} />
-        <span>Имена людей программа не угадывает: в документах используются метки «Говорящий 1», «Говорящий 2» и далее.</span>
+        <span>Имена участников программа не определяет: в документах будут метки «Говорящий 1», «Говорящий 2» и так далее.</span>
       </div>
       <div className="dialog-actions">
         <Dialog.Close asChild><Button>Понятно</Button></Dialog.Close>
@@ -173,8 +173,8 @@ export function DiagnosticsDialog({
       open={open}
       onOpenChange={onOpenChange}
       icon={<Settings2 size={24} />}
-      title="Диагностика рабочей станции"
-      description="Здесь видно, что готово к обработке и что потребуется настроить."
+      title="Проверка готовности компьютера"
+      description="Здесь видно, что уже готово к работе и что ещё нужно настроить."
       wide
     >
       {error && <div className="diagnostic-error"><CircleAlert size={17} />{error}</div>}
@@ -192,16 +192,16 @@ export function DiagnosticsDialog({
         <CheckRow
           ok={Boolean(system?.deepseek_configured)}
           label="DeepSeek API"
-          detail={system?.deepseek_configured ? "Ключ API найден" : "Переменная DEEPSEEK_API_KEY не найдена"}
+          detail={system?.deepseek_configured ? "Ключ найден" : "Ключ не найден"}
         />
       </div>
       <div className="diagnostic-mode">
         {mode === "local" ? <Laptop size={18} /> : <Cloud size={18} />}
         <span>
-          <strong>Сейчас выбран: {mode === "local" ? "локальный режим" : "DeepSeek API"}</strong>
+          <strong>Выбран режим: {mode === "local" ? "локальный режим" : "DeepSeek API"}</strong>
           {mode === "local"
-            ? "При обновлении программа попробует сама запустить Ollama."
-            : "Во внешний API уходит только распознанный текст, не запись."}
+            ? "При проверке программа попробует сама запустить Ollama."
+            : "В DeepSeek отправляется только текст, а не запись."}
         </span>
       </div>
       <div className="dialog-actions diagnostic-actions">

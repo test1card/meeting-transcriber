@@ -259,9 +259,9 @@ function installTauriMock(payload) {
 
 const expected = {
   ready: "Из записи — в готовые документы",
-  processing: "Готовим документы встречи",
+  processing: "Готовим материалы по встрече",
   failed: "Не удалось завершить один из этапов",
-  complete: "Документы встречи подготовлены",
+  complete: "Материалы по встрече готовы",
 };
 
 const server = startVite();
@@ -287,8 +287,8 @@ try {
     await page.screenshot({ path: path.join(resultRoot, `${name}.png`), fullPage: true });
 
     if (name === "ready") {
-      await page.getByRole("radio", { name: /На этом компьютере/ }).click();
-      const localSelected = await page.getByRole("radio", { name: /На этом компьютере/ }).getAttribute("aria-checked");
+      await page.getByRole("radio", { name: /Локально/ }).click();
+      const localSelected = await page.getByRole("radio", { name: /Локально/ }).getAttribute("aria-checked");
       if (localSelected !== "true") failures.push("ready: local mode did not become selected");
       const startedOllama = await page.evaluate(() =>
         window.__TAURI_CALLS__.some(
@@ -300,12 +300,12 @@ try {
 
       await page.getByRole("button", { name: "Справка" }).click();
       await page.waitForTimeout(450);
-      await page.getByRole("heading", { name: "Как подготовить документы" }).waitFor();
+      await page.getByRole("heading", { name: "Как обработать запись" }).waitFor();
       await page.screenshot({ path: path.join(resultRoot, "help.png"), fullPage: true });
       await page.getByRole("button", { name: "Закрыть" }).first().click();
       await page.getByRole("button", { name: /Система готова|Нужна настройка/ }).click();
       await page.waitForTimeout(450);
-      await page.getByRole("heading", { name: "Диагностика рабочей станции" }).waitFor();
+      await page.getByRole("heading", { name: "Проверка готовности компьютера" }).waitFor();
       await page.screenshot({ path: path.join(resultRoot, "diagnostics.png"), fullPage: true });
       const diagnosticRows = await page.locator(".diagnostic-row").count();
       if (diagnosticRows !== 5) failures.push(`diagnostics: expected 5 checks, got ${diagnosticRows}`);
@@ -314,7 +314,7 @@ try {
       if (await page.locator(".diagnostic-error").count()) failures.push("diagnostics: unexpected system error");
       await page.getByRole("button", { name: /Модели и установка/ }).click();
       await page.waitForTimeout(450);
-      await page.getByRole("heading", { name: "Настройка рабочей станции" }).waitFor();
+      await page.getByRole("heading", { name: "Подготовка компьютера" }).waitFor();
       await page.getByText("13–19 ГБ VRAM", { exact: true }).waitFor();
       const packCards = await page.locator(".pack-card").count();
       if (packCards !== 4) failures.push(`setup: expected 4 pack cards, got ${packCards}`);

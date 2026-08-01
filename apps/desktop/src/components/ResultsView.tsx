@@ -56,7 +56,7 @@ export function ResultsView({
           <Check size={29} strokeWidth={2.5} />
         </motion.div>
         <span className="eyebrow">Готово</span>
-        <h1>Документы встречи подготовлены</h1>
+        <h1>Материалы по встрече готовы</h1>
         <p>{inputName}</p>
         <div className="result-meta">
           <span>{status.cloud_used ? "DeepSeek API" : "Локальная обработка"}</span>

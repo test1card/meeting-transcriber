@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Документы встречи</title>
+  <title id="title">Материалы встреч</title>
   <desc id="desc">Исходная волна речи, развитая контуром документа и метками говорящих</desc>
   <defs>
     <linearGradient id="bg" x1="80" y1="50" x2="430" y2="470" gradientUnits="userSpaceOnUse">

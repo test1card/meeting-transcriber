@@ -306,7 +306,7 @@ export function App() {
             <span /><span /><span /><span /><span />
           </span>
           <span>
-            <strong>Документы встречи</strong>
+            <strong>Материалы встреч</strong>
             <em>расшифровка и протокол</em>
           </span>
         </button>
@@ -506,7 +506,7 @@ export function App() {
       </main>
 
       <footer className="app-footer">
-        <span>Meeting Documents · рабочая станция</span>
+        <span>Материалы встреч · локальная обработка</span>
         <button type="button" onClick={() => setDiagnosticsOpen(true)}>
           <Settings2 size={14} /> Диагностика
         </button>

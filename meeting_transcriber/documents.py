@@ -70,13 +70,13 @@ def _configure(document: Document, *, title: str, subtitle: str) -> None:
     run.font.color.rgb = MUTED
 
     header = section.header.paragraphs[0]
-    header.text = "Meeting Documents"
+    header.text = "Материалы встреч"
     header.runs[0].font.name = "Aptos"
     header.runs[0].font.size = Pt(8.5)
     header.runs[0].font.color.rgb = MUTED
     footer = section.footer.paragraphs[0]
     footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    footer.add_run("Создано локальным приложением Meeting Documents  •  ")
+    footer.add_run("Создано приложением «Материалы встреч»  •  ")
     field = OxmlElement("w:fldSimple")
     field.set(qn("w:instr"), "PAGE")
     footer._p.append(field)

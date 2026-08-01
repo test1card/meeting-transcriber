@@ -37,9 +37,9 @@ export function ModeSelector({
       <div className="section-heading">
         <div>
           <span className="step-number">02</span>
-          <h2 id="mode-heading">Где подготовить документы</h2>
+          <h2 id="mode-heading">Как обработать запись</h2>
         </div>
-        <span className="section-hint">Аудио всегда остаётся локально</span>
+        <span className="section-hint">Запись не покидает компьютер</span>
       </div>
 
       <div className="mode-grid" role="radiogroup" aria-label="Режим обработки">
@@ -50,13 +50,13 @@ export function ModeSelector({
             if (!localModels.includes(model)) onModelChange(localModels[0]);
           }}
           icon={<Cpu size={22} />}
-          title="На этом компьютере"
-          badge="Конфиденциально"
-          description="Текст никуда не отправляется. Подойдёт для закрытых совещаний."
+          title="Локально"
+          badge="Данные остаются здесь"
+          description="Запись и текст не отправляются в интернет — подходит для закрытых совещаний."
           status={
             <>
               <StatusDot tone={system?.ollama ? "good" : "warn"} />
-              {system?.ollama ? "Ollama готов" : "Ollama недоступен"}
+              {system?.ollama ? "Локальная обработка готова" : "Локальная обработка недоступна"}
             </>
           }
         />
@@ -69,12 +69,12 @@ export function ModeSelector({
           }}
           icon={<Cloud size={22} />}
           title="DeepSeek API"
-          badge={system?.deepseek_configured ? "Рекомендуется" : "Нужен свой ключ"}
-          description="Выше качество редакционной обработки и протокола."
+          badge={system?.deepseek_configured ? "Лучшее качество" : "Нужен свой ключ"}
+          description="Лучше вычитывает стенограмму и оформляет протокол."
           status={
             <>
               <StatusDot tone={system?.deepseek_configured ? "good" : "warn"} />
-              {system?.deepseek_configured ? "API настроен" : "Нет ключа API"}
+              {system?.deepseek_configured ? "Ключ найден" : "Ключ не найден"}
             </>
           }
         />
@@ -85,8 +85,8 @@ export function ModeSelector({
           <label htmlFor="model-select">Модель</label>
           <p>
             {mode === "local"
-              ? "Используется установленная модель Ollama"
-              : "Передаётся только текст стенограммы"}
+              ? "Работает установленная локальная модель"
+              : "В DeepSeek отправляется только текст стенограммы"}
           </p>
         </div>
         <div className="select-wrap">
@@ -99,8 +99,8 @@ export function ModeSelector({
             {models.map((name) => (
               <option key={name} value={name}>
                 {name}
-                {name === "gemma4:12b" ? " — рекомендуется" : ""}
-                {name === "gemma4:26b" ? " — медленно" : ""}
+                {name === "gemma4:12b" ? " — основной локальный вариант" : ""}
+                {name === "gemma4:26b" ? " — заметно медленнее" : ""}
                 {name === "gemma4:e4b" ? " — только черновик" : ""}
                 {name === "deepseek-v4-flash" ? " — быстро" : ""}
               </option>
