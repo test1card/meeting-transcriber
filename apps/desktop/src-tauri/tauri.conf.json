@@ -1,0 +1,63 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Документы встречи",
+  "version": "0.1.12",
+  "identifier": "local.meeting-documents",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run prepare:resources && npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Документы встречи",
+        "width": 1180,
+        "height": 840,
+        "minWidth": 760,
+        "minHeight": 620,
+        "center": true,
+        "resizable": true,
+        "fullscreen": false,
+        "dragDropEnabled": true,
+        "theme": null
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' customprotocol: asset:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "font-src": "'self'",
+        "img-src": "'self' data: blob:",
+        "style-src": "'self' 'unsafe-inline'",
+        "script-src": "'self'"
+      },
+      "capabilities": ["main-capability"]
+    }
+  },
+  "bundle": {
+    "license": "MIT",
+    "licenseFile": "../../../LICENSE",
+    "resources": {
+      "resources/workstation/": "workstation/"
+    },
+    "active": true,
+    "targets": ["nsis"],
+    "shortDescription": "Расшифровка встреч и подготовка документов Word",
+    "longDescription": "Локальная расшифровка русскоязычных встреч с обязательным разделением говорящих и локальной либо API-обработкой текста.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    }
+  }
+}

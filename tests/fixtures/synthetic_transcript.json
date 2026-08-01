@@ -1,0 +1,26 @@
+{
+  "metadata": {"language": "en", "synthetic": true},
+  "transcript": {
+    "language": "en",
+    "segments": [
+      {
+        "start": 0.0,
+        "end": 8.0,
+        "speaker": "SPEAKER_00",
+        "text": "We agreed to ship the beta on August 15. Maria owns the release checklist."
+      },
+      {
+        "start": 8.2,
+        "end": 16.0,
+        "speaker": "SPEAKER_01",
+        "text": "I will finish the security review by August 10. The unresolved risk is vendor API instability."
+      },
+      {
+        "start": 16.3,
+        "end": 22.0,
+        "speaker": "SPEAKER_00",
+        "text": "Open question: do we invite the pilot customers before the beta announcement?"
+      }
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+# One term per line. Copy this file and add company-specific vocabulary.
+Docker
+GitHub
+vLLM
+WhisperX
+SolidWorks

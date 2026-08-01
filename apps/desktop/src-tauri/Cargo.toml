@@ -1,0 +1,29 @@
+[package]
+name = "meeting-documents"
+version = "0.1.12"
+description = "Russian meeting transcription and document preparation"
+authors = ["Meeting Documents"]
+license = "MIT"
+edition = "2024"
+
+[lib]
+name = "meeting_documents_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+dirs = "6"
+open = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

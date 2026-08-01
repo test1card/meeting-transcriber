@@ -1,0 +1,585 @@
+{
+  "schema_version": 2,
+  "catalog_id": "meeting-documents-models-2026-07-31-r3",
+  "as_of": "2026-07-31",
+  "review_window": "2026-07-30/2026-08-31",
+  "language_priority": ["ru", "en-terms"],
+  "resource_policy": {
+    "classification_basis": [
+      "largest_single_gpu_vram_gb",
+      "system_ram_gb",
+      "free_disk_gb",
+      "gpu_count",
+      "form_factor",
+      "sustained_power_limit_w"
+    ],
+    "gpu_name_is_diagnostic_only": true,
+    "single_model_vram_is_not_summed_across_gpus": true,
+    "current_scheduler": "one_gpu_heavy_job_at_a_time",
+    "electricity_cost_is_excluded": true,
+    "notes": [
+      "Рекомендация определяется измеренными ресурсами, а не названием видеокарты.",
+      "Для одной модели используется объём VRAM крупнейшей доступной GPU, а не сумма памяти нескольких GPU.",
+      "У ноутбуков одинаковый объём VRAM не гарантирует одинаковую скорость: учитываются форм-фактор и доступный power limit.",
+      "Несколько GPU пока дают возможность распределять будущие задания, но текущий конвейер выполняет один GPU-тяжёлый этап за раз."
+    ]
+  },
+  "deployment_classes": [
+    {
+      "id": "portable",
+      "label": "Ноутбук или мобильная рабочая станция",
+      "detection": "chassis_or_battery",
+      "recommendation_rules": [
+        "Работа от сети обязательна для длинных записей.",
+        "Сохранять дополнительный запас VRAM и RAM.",
+        "Предупреждать о возможном снижении скорости при длительной нагрузке."
+      ]
+    },
+    {
+      "id": "desktop",
+      "label": "Настольный компьютер",
+      "detection": "non_portable_single_gpu",
+      "recommendation_rules": [
+        "Основной класс для локальной обработки одного совещания.",
+        "Рекомендация определяется VRAM, RAM и свободным диском."
+      ]
+    },
+    {
+      "id": "workstation",
+      "label": "Профессиональная рабочая станция",
+      "detection": "resource_level_or_multiple_gpus",
+      "recommendation_rules": [
+        "Большой объём RAM и VRAM позволяет использовать локальный максимум и увеличенный контекст.",
+        "ECC полезна для длительной эксплуатации, но не является обязательным условием конвейера."
+      ]
+    },
+    {
+      "id": "server",
+      "label": "Сервер или многопроцессорный узел",
+      "detection": "multiple_gpus_or_headless",
+      "recommendation_rules": [
+        "Текущий Windows-инсталлятор не настраивает серверный планировщик.",
+        "Для параллельных совещаний потребуется отдельное распределение GPU."
+      ]
+    }
+  ],
+  "resource_tiers": [
+    {
+      "id": "resource-api-only",
+      "label": "Без CUDA GPU",
+      "min_single_gpu_vram_gb": 0,
+      "max_single_gpu_vram_gb": 0,
+      "min_ram_gb": 16,
+      "recommended_ram_gb": 32,
+      "min_free_disk_gb": 20,
+      "recommended_free_disk_gb": 40,
+      "min_gpu_count": 0,
+      "speech_capability": "required_local_pipeline_unavailable",
+      "local_text_ceiling": "none",
+      "recommended_pack_ids": [],
+      "recommendation": "Недостаточно для обязательного локального определения говорящих. Подходит только как клиент API или управляющий компьютер."
+    },
+    {
+      "id": "resource-8",
+      "label": "6–8 ГБ VRAM",
+      "min_single_gpu_vram_gb": 5.5,
+      "max_single_gpu_vram_gb": 9.9,
+      "min_ram_gb": 32,
+      "recommended_ram_gb": 48,
+      "min_free_disk_gb": 40,
+      "recommended_free_disk_gb": 70,
+      "min_gpu_count": 1,
+      "speech_capability": "partial_or_reduced_chunks",
+      "local_text_ceiling": "compact",
+      "recommended_pack_ids": [],
+      "recommendation": "MOSS и WhisperX работают последовательно; полный обязательный Qwen-проход не гарантирован. Не рекомендовать как готовую финальную станцию без отдельного облегчённого профиля."
+    },
+    {
+      "id": "resource-12",
+      "label": "10–12 ГБ VRAM",
+      "min_single_gpu_vram_gb": 10,
+      "max_single_gpu_vram_gb": 12.9,
+      "min_ram_gb": 32,
+      "recommended_ram_gb": 64,
+      "min_free_disk_gb": 45,
+      "recommended_free_disk_gb": 80,
+      "min_gpu_count": 1,
+      "speech_capability": "full_sequential_with_limited_headroom",
+      "local_text_ceiling": "e4b",
+      "recommended_pack_ids": ["deepseek-production", "local-proven"],
+      "recommendation": "Полный речевой ансамбль запускается последовательно. API — основной профиль; локальная текстовая модель требует ограниченного контекста и запаса RAM."
+    },
+    {
+      "id": "resource-16",
+      "label": "13–19 ГБ VRAM",
+      "min_single_gpu_vram_gb": 13,
+      "max_single_gpu_vram_gb": 19.9,
+      "min_ram_gb": 48,
+      "recommended_ram_gb": 64,
+      "min_free_disk_gb": 55,
+      "recommended_free_disk_gb": 100,
+      "min_gpu_count": 1,
+      "speech_capability": "full_sequential",
+      "local_text_ceiling": "12b",
+      "recommended_pack_ids": ["deepseek-production", "local-efficient"],
+      "recommendation": "Оптимальный уровень для полного STT-ансамбля и сильной локальной текстовой модели. 26B возможна только с выгрузкой в RAM и не является рекомендацией по умолчанию."
+    },
+    {
+      "id": "resource-24",
+      "label": "20–31 ГБ VRAM",
+      "min_single_gpu_vram_gb": 20,
+      "max_single_gpu_vram_gb": 31.9,
+      "min_ram_gb": 64,
+      "recommended_ram_gb": 96,
+      "min_free_disk_gb": 70,
+      "recommended_free_disk_gb": 120,
+      "min_gpu_count": 1,
+      "speech_capability": "full_with_large_headroom",
+      "local_text_ceiling": "26b",
+      "recommended_pack_ids": ["deepseek-production", "local-efficient", "local-maximum"],
+      "recommendation": "Полный ансамбль и локальная 26B без существенной выгрузки. Подходит для длинных записей и увеличенного контекста."
+    },
+    {
+      "id": "resource-32-47",
+      "label": "32–47 ГБ VRAM",
+      "min_single_gpu_vram_gb": 32,
+      "max_single_gpu_vram_gb": 47.9,
+      "min_ram_gb": 64,
+      "recommended_ram_gb": 128,
+      "min_free_disk_gb": 90,
+      "recommended_free_disk_gb": 160,
+      "min_gpu_count": 1,
+      "speech_capability": "full_professional",
+      "local_text_ceiling": "26b_large_context",
+      "recommended_pack_ids": ["deepseek-production", "local-maximum"],
+      "recommendation": "Профессиональный запас для полного ансамбля, 26B и большого контекста. Текущий набор не использует всю доступную VRAM одновременно."
+    },
+    {
+      "id": "resource-48-79",
+      "label": "48–79 ГБ VRAM",
+      "min_single_gpu_vram_gb": 48,
+      "max_single_gpu_vram_gb": 79.9,
+      "min_ram_gb": 96,
+      "recommended_ram_gb": 192,
+      "min_free_disk_gb": 120,
+      "recommended_free_disk_gb": 240,
+      "min_gpu_count": 1,
+      "speech_capability": "full_professional",
+      "local_text_ceiling": "future_large_models",
+      "recommended_pack_ids": ["deepseek-production", "local-maximum"],
+      "recommendation": "Профессиональная станция для крупных будущих локальных моделей, большого контекста и нескольких очередей. Текущий single-job конвейер использует лишь часть потенциала."
+    },
+    {
+      "id": "resource-80-plus",
+      "label": "80+ ГБ VRAM",
+      "min_single_gpu_vram_gb": 80,
+      "max_single_gpu_vram_gb": 10000,
+      "min_ram_gb": 128,
+      "recommended_ram_gb": 256,
+      "min_free_disk_gb": 160,
+      "recommended_free_disk_gb": 320,
+      "min_gpu_count": 1,
+      "speech_capability": "server_grade",
+      "local_text_ceiling": "future_maximum",
+      "recommended_pack_ids": ["deepseek-production", "local-maximum"],
+      "recommendation": "Серверный или максимальный профессиональный уровень. Нужен отдельный multi-job/multi-GPU планировщик, чтобы использовать ресурсы эффективно."
+    }
+  ],
+  "disclaimer": "Рекомендации учитывают официальные model cards, размер весов и измерения этой рабочей станции. Они не заменяют WER/CER/cpWER/DER/JER и проверку протокола на человеческом эталоне.",
+  "hardware_profiles": [
+    {
+      "id": "cpu-only",
+      "label": "Без совместимой NVIDIA GPU",
+      "min_vram_gb": 0,
+      "max_vram_gb": 0,
+      "min_ram_gb": 32,
+      "recommendation": "Только облачная обработка или перенос STT на GPU-рабочую станцию."
+    },
+    {
+      "id": "gpu-8",
+      "label": "NVIDIA 6–8 ГБ",
+      "min_vram_gb": 6,
+      "max_vram_gb": 8,
+      "min_ram_gb": 32,
+      "recommendation": "MOSS и Whisper; Qwen может потребовать уменьшенные чанки. Локальная редактура — компактная модель."
+    },
+    {
+      "id": "gpu-12",
+      "label": "NVIDIA 10–12 ГБ",
+      "min_vram_gb": 10,
+      "max_vram_gb": 12,
+      "min_ram_gb": 32,
+      "recommendation": "Полный multi-STT конвейер последовательно; локальная редактура до 8–10 ГБ весов."
+    },
+    {
+      "id": "gpu-16",
+      "label": "NVIDIA 16 ГБ",
+      "min_vram_gb": 13,
+      "max_vram_gb": 19,
+      "min_ram_gb": 48,
+      "recommendation": "Полный сильный STT-набор. Gemma 4 12B или E4B полностью на GPU; 26B только с частичной выгрузкой."
+    },
+    {
+      "id": "gpu-24",
+      "label": "NVIDIA 20–24 ГБ",
+      "min_vram_gb": 20,
+      "max_vram_gb": 31,
+      "min_ram_gb": 64,
+      "recommendation": "Полный STT-набор и Gemma 4 26B полностью либо почти полностью на GPU."
+    },
+    {
+      "id": "gpu-32-plus",
+      "label": "NVIDIA 32+ ГБ",
+      "min_vram_gb": 32,
+      "max_vram_gb": 1000,
+      "min_ram_gb": 64,
+      "recommendation": "Максимальные локальные модели и увеличенный контекст без существенной выгрузки в RAM."
+    }
+  ],
+  "packs": [
+    {
+      "id": "deepseek-production",
+      "label": "Максимум качества через API",
+      "description": "Полный локальный multi-STT и говорящие; DeepSeek V4 Pro или Flash подготавливает текстовые документы.",
+      "required_model_ids": [
+        "moss-transcribe-diarize-0.9b",
+        "ecapa-voxceleb",
+        "whisperx-large-v3-ru",
+        "qwen3-asr-1.7b-aligner"
+      ],
+      "optional_model_ids": [],
+      "api_model_ids": ["deepseek-v4-pro", "deepseek-v4-flash"],
+      "estimated_download_gb": 13.6,
+      "estimated_installed_gb": 28.0,
+      "default_for_profiles": ["gpu-12", "gpu-16", "gpu-24", "gpu-32-plus"]
+    },
+    {
+      "id": "local-efficient",
+      "label": "Локально — сильный и эффективный",
+      "description": "Полный multi-STT плюс Gemma 4 12B. Проверенный локальный default для 16 ГБ VRAM: лучшее покрытие протокола среди локальных вариантов при приемлемом времени.",
+      "required_model_ids": [
+        "moss-transcribe-diarize-0.9b",
+        "ecapa-voxceleb",
+        "whisperx-large-v3-ru",
+        "qwen3-asr-1.7b-aligner",
+        "gemma4-12b"
+      ],
+      "optional_model_ids": ["gemma4-e4b"],
+      "api_model_ids": [],
+      "estimated_download_gb": 21.2,
+      "estimated_installed_gb": 36.0,
+      "default_for_profiles": ["gpu-16"]
+    },
+    {
+      "id": "local-proven",
+      "label": "Локально — быстрый черновик",
+      "description": "Полный multi-STT плюс Gemma 4 E4B. Совместимый быстрый режим, но итоговый протокол требует ручного переписывания; не рекомендуется как готовый документ.",
+      "required_model_ids": [
+        "moss-transcribe-diarize-0.9b",
+        "ecapa-voxceleb",
+        "whisperx-large-v3-ru",
+        "qwen3-asr-1.7b-aligner",
+        "gemma4-e4b"
+      ],
+      "optional_model_ids": [],
+      "api_model_ids": [],
+      "estimated_download_gb": 23.2,
+      "estimated_installed_gb": 38.0,
+      "default_for_profiles": ["gpu-12"]
+    },
+    {
+      "id": "local-maximum",
+      "label": "Локальный максимум",
+      "description": "Полный multi-STT плюс Gemma 4 26B A4B. На 16 ГБ VRAM часть весов и контекста уходит в RAM; измеренный выигрыш над 12B не подтвердился, режим оставлен экспериментальным.",
+      "required_model_ids": [
+        "moss-transcribe-diarize-0.9b",
+        "ecapa-voxceleb",
+        "whisperx-large-v3-ru",
+        "qwen3-asr-1.7b-aligner",
+        "gemma4-26b"
+      ],
+      "optional_model_ids": [],
+      "api_model_ids": [],
+      "estimated_download_gb": 31.6,
+      "estimated_installed_gb": 47.0,
+      "default_for_profiles": ["gpu-24", "gpu-32-plus"]
+    }
+  ],
+  "models": [
+    {
+      "id": "moss-transcribe-diarize-0.9b",
+      "display_name": "MOSS-Transcribe-Diarize 0.9B",
+      "role": "speech_anchor",
+      "provider": "huggingface",
+      "locator": "OpenMOSS-Team/MOSS-Transcribe-Diarize",
+      "revision": "e5118b411bf5a77d7a90c4941066bec93c967312",
+      "license": "Apache-2.0",
+      "languages": ["ru", "multilingual-50+"],
+      "speaker_labels": true,
+      "timestamps": true,
+      "download_gb": 1.71,
+      "min_vram_gb": 4,
+      "recommended_vram_gb": 6,
+      "min_ram_gb": 16,
+      "quality_tier": "core-required",
+      "efficiency_tier": "high",
+      "production_status": "validated_pipeline",
+      "selectable": false,
+      "install_environment": "moss",
+      "measured_on_target": {
+        "gpu": "RTX 5070 Ti 16 GB",
+        "peak_vram_gb": 3.146,
+        "notes": "Измерено на исходном русском совещании; не является универсальным максимумом."
+      },
+      "rationale": "Новый релиз 9 июля 2026 года; объединяет текст, временные метки и анонимных говорящих и поддерживает русский.",
+      "sources": [
+        "https://huggingface.co/OpenMOSS-Team/MOSS-Transcribe-Diarize",
+        "https://github.com/OpenMOSS/MOSS-Transcribe-Diarize"
+      ]
+    },
+    {
+      "id": "ecapa-voxceleb",
+      "display_name": "ECAPA-TDNN speaker embeddings",
+      "role": "speaker_globalization",
+      "provider": "huggingface",
+      "locator": "speechbrain/spkrec-ecapa-voxceleb",
+      "revision": "0f99f2d0ebe89ac095bcc5903c4dd8f72b367286",
+      "license": "Apache-2.0",
+      "languages": ["language-independent-embeddings"],
+      "speaker_labels": true,
+      "timestamps": false,
+      "download_gb": 0.08,
+      "min_vram_gb": 2,
+      "recommended_vram_gb": 4,
+      "min_ram_gb": 8,
+      "quality_tier": "core-required",
+      "efficiency_tier": "very-high",
+      "production_status": "validated_pipeline",
+      "selectable": false,
+      "install_environment": "qwen",
+      "rationale": "Связывает локальные метки MOSS между чанками; не определяет реальные имена людей.",
+      "sources": [
+        "https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb"
+      ]
+    },
+    {
+      "id": "whisperx-large-v3-ru",
+      "display_name": "WhisperX large-v3 + Russian aligner",
+      "role": "speech_crosscheck",
+      "provider": "huggingface-wsl",
+      "locator": "Systran/faster-whisper-large-v3",
+      "additional_locators": [
+        "jonatasgrosman/wav2vec2-large-xlsr-53-russian"
+      ],
+      "revision": "edaa852ec7e145841d8ffdb056a99866b5f0a478",
+      "license": "MIT/model-specific",
+      "languages": ["ru", "multilingual"],
+      "additional_revisions": [
+        "2329100508896c6d9b157019803ab5601e6f3406"
+      ],
+      "speaker_labels": false,
+      "timestamps": true,
+      "download_gb": 5.3,
+      "min_vram_gb": 6,
+      "recommended_vram_gb": 8,
+      "min_ram_gb": 16,
+      "quality_tier": "strong-independent-reader",
+      "efficiency_tier": "medium",
+      "production_status": "validated_pipeline",
+      "selectable": false,
+      "install_environment": "whisperx-wsl",
+      "measured_on_target": {
+        "elapsed_seconds": 209.756,
+        "rtf": 0.04681
+      },
+      "rationale": "Зрелое независимое чтение русского текста и выравнивание; не используется как источник обязательных говорящих.",
+      "sources": [
+        "https://github.com/m-bain/whisperX",
+        "https://huggingface.co/Systran/faster-whisper-large-v3",
+        "https://huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-russian"
+      ]
+    },
+    {
+      "id": "qwen3-asr-1.7b-aligner",
+      "display_name": "Qwen3-ASR 1.7B + ForcedAligner 0.6B",
+      "role": "speech_crosscheck",
+      "provider": "huggingface",
+      "locator": "Qwen/Qwen3-ASR-1.7B",
+      "additional_locators": [
+        "Qwen/Qwen3-ForcedAligner-0.6B"
+      ],
+      "revision": "7278e1e70fe206f11671096ffdd38061171dd6e5",
+      "license": "Apache-2.0",
+      "languages": ["ru", "multilingual-30+"],
+      "speaker_labels": false,
+      "timestamps": true,
+      "additional_revisions": [
+        "c7cbfc2048c462b0d63a45797104fc9db3ad62b7"
+      ],
+      "download_gb": 6.09,
+      "min_vram_gb": 10.5,
+      "recommended_vram_gb": 12,
+      "min_ram_gb": 24,
+      "quality_tier": "strong-independent-reader",
+      "efficiency_tier": "medium",
+      "production_status": "validated_pipeline",
+      "selectable": false,
+      "install_environment": "qwen",
+      "measured_on_target": {
+        "gpu": "RTX 5070 Ti 16 GB",
+        "peak_vram_gb": 10.113,
+        "elapsed_seconds": 425.287,
+        "rtf": 0.09491
+      },
+      "rationale": "Сильное независимое чтение русской речи с отдельным выравниванием; помогает находить расхождения с MOSS и WhisperX.",
+      "sources": [
+        "https://huggingface.co/Qwen/Qwen3-ASR-1.7B-hf",
+        "https://huggingface.co/Qwen/Qwen3-ForcedAligner-0.6B"
+      ]
+    },
+    {
+      "id": "nemotron-3.5-asr-0.6b",
+      "display_name": "NVIDIA Nemotron 3.5 ASR Streaming 0.6B",
+      "role": "speech_candidate",
+      "provider": "huggingface",
+      "locator": "nvidia/nemotron-3.5-asr-streaming-0.6b",
+      "revision": "main",
+      "license": "NVIDIA Open Model License",
+      "languages": ["ru-RU", "multilingual-40-locales"],
+      "speaker_labels": false,
+      "timestamps": false,
+      "download_gb": 1.5,
+      "min_vram_gb": 3,
+      "recommended_vram_gb": 4,
+      "min_ram_gb": 12,
+      "quality_tier": "research-candidate",
+      "efficiency_tier": "very-high",
+      "production_status": "adapter_required",
+      "selectable": false,
+      "install_environment": "nemotron",
+      "rationale": "Очень эффективный новый multilingual ASR от 4 июня 2026 с официальными результатами для ru-RU; пока не включён в производственный консенсус.",
+      "sources": [
+        "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+      ]
+    },
+    {
+      "id": "gemma4-e4b",
+      "display_name": "Gemma 4 E4B",
+      "role": "local_documents",
+      "provider": "ollama",
+      "locator": "gemma4:e4b",
+      "revision": "c6eb396dbd59",
+      "license": "Gemma Terms",
+      "languages": ["multilingual"],
+      "download_gb": 9.6,
+      "min_vram_gb": 10,
+      "recommended_vram_gb": 12,
+      "min_ram_gb": 24,
+      "quality_tier": "efficient",
+      "efficiency_tier": "high",
+      "production_status": "draft_only",
+      "selectable": true,
+      "install_environment": "ollama",
+      "rationale": "Полностью помещается в 16 ГБ VRAM, но на русском протоколе потеряла большую часть содержания и пригодна только для черновика.",
+      "sources": [
+        "https://ollama.com/library/gemma4:e4b",
+        "https://ollama.com/library/gemma4/tags"
+      ]
+    },
+    {
+      "id": "gemma4-12b",
+      "display_name": "Gemma 4 12B",
+      "role": "local_documents",
+      "provider": "ollama",
+      "locator": "gemma4:12b",
+      "revision": "4eb23ef187e2",
+      "license": "Gemma Terms",
+      "languages": ["multilingual"],
+      "download_gb": 7.6,
+      "min_vram_gb": 10,
+      "recommended_vram_gb": 14,
+      "min_ram_gb": 32,
+      "quality_tier": "power-efficient",
+      "efficiency_tier": "high",
+      "production_status": "validated_pipeline",
+      "selectable": true,
+      "install_environment": "ollama",
+      "rationale": "Проверена на русском совещании и универсальном наборе 60/60; рекомендуемый локальный баланс покрытия, скорости и требований к 16 ГБ VRAM.",
+      "sources": [
+        "https://ollama.com/library/gemma4:12b",
+        "https://ollama.com/library/gemma4/tags"
+      ]
+    },
+    {
+      "id": "gemma4-26b",
+      "display_name": "Gemma 4 26B A4B",
+      "role": "local_documents",
+      "provider": "ollama",
+      "locator": "gemma4:26b",
+      "revision": "5571076f3d70",
+      "license": "Gemma Terms",
+      "languages": ["multilingual"],
+      "download_gb": 18.0,
+      "min_vram_gb": 16,
+      "recommended_vram_gb": 20,
+      "min_ram_gb": 48,
+      "supports_cpu_offload": true,
+      "quality_tier": "local-maximum",
+      "efficiency_tier": "medium",
+      "production_status": "postponed_on_16gb",
+      "selectable": true,
+      "install_environment": "ollama",
+      "rationale": "Файл 18 ГБ частично выгружается в RAM на 16 ГБ VRAM; измерено 130,8 с против 105,2 с у 12B без устойчивого выигрыша качества.",
+      "sources": [
+        "https://ollama.com/library/gemma4:26b",
+        "https://ollama.com/library/gemma4/tags"
+      ]
+    },
+    {
+      "id": "deepseek-v4-flash",
+      "display_name": "DeepSeek V4 Flash",
+      "role": "api_documents",
+      "provider": "deepseek-api",
+      "locator": "deepseek-v4-flash",
+      "license": "DeepSeek API Terms",
+      "languages": ["multilingual"],
+      "download_gb": 0,
+      "min_vram_gb": 0,
+      "recommended_vram_gb": 0,
+      "min_ram_gb": 0,
+      "quality_tier": "api-efficient",
+      "efficiency_tier": "very-high",
+      "production_status": "validated_pipeline",
+      "selectable": true,
+      "install_environment": "api",
+      "rationale": "13B active, 1M context; быстрый и дешёвый API-вариант, уже используемый конвейером.",
+      "sources": [
+        "https://api-docs.deepseek.com/quick_start/pricing",
+        "https://api-docs.deepseek.com/news/news260424/"
+      ]
+    },
+    {
+      "id": "deepseek-v4-pro",
+      "display_name": "DeepSeek V4 Pro",
+      "role": "api_documents",
+      "provider": "deepseek-api",
+      "locator": "deepseek-v4-pro",
+      "license": "DeepSeek API Terms",
+      "languages": ["multilingual"],
+      "download_gb": 0,
+      "min_vram_gb": 0,
+      "recommended_vram_gb": 0,
+      "min_ram_gb": 0,
+      "quality_tier": "api-maximum",
+      "efficiency_tier": "medium",
+      "production_status": "compatible_unbenchmarked",
+      "selectable": true,
+      "install_environment": "api",
+      "rationale": "49B active, 1M context; самый мощный официальный DeepSeek API-tier, но дороже Flash и ещё не измерен на этом meeting workflow.",
+      "sources": [
+        "https://api-docs.deepseek.com/quick_start/pricing",
+        "https://api-docs.deepseek.com/news/news260424/"
+      ]
+    }
+  ]
+}

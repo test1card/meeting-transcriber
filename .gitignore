@@ -1,0 +1,14 @@
+.env
+*.env
+.pytest_cache/
+.pytest-*/
+.venv-win/
+.venv-*/
+**/node_modules/
+apps/desktop/src-tauri/target/
+apps/desktop/dist/
+apps/desktop/test-results/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+outputs/
