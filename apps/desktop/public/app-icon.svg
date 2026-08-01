@@ -1,16 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Документы встречи</title>
+  <desc id="desc">Исходная волна речи, развитая контуром документа и метками говорящих</desc>
   <defs>
     <linearGradient id="bg" x1="80" y1="50" x2="430" y2="470" gradientUnits="userSpaceOnUse">
       <stop stop-color="#3d8075"/>
       <stop offset="1" stop-color="#21544c"/>
     </linearGradient>
+    <linearGradient id="paper" x1="126" y1="92" x2="390" y2="426" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity=".96"/>
+      <stop offset="1" stop-color="#e8f1ed" stop-opacity=".88"/>
+    </linearGradient>
   </defs>
   <rect width="512" height="512" rx="126" fill="url(#bg)"/>
+  <path d="M142 94h170l58 58v264c0 18-14 32-32 32H142c-18 0-32-14-32-32V126c0-18 14-32 32-32Z" fill="url(#paper)" fill-opacity=".19" stroke="#e4f2ed" stroke-opacity=".42" stroke-width="8"/>
+  <path d="M312 94v52c0 8 6 14 14 14h44" fill="none" stroke="#e4f2ed" stroke-opacity=".42" stroke-width="8" stroke-linejoin="round"/>
   <path d="M136 337c27 0 27-162 54-162s27 203 54 203 27-253 54-253 27 203 54 203 27-121 54-121" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
   <circle cx="136" cy="337" r="15" fill="#d9ede8"/>
-  <circle cx="190" cy="175" r="15" fill="#d9ede8"/>
+  <circle cx="190" cy="175" r="15" fill="#f5c578"/>
   <circle cx="244" cy="378" r="15" fill="#d9ede8"/>
-  <circle cx="298" cy="125" r="15" fill="#d9ede8"/>
+  <circle cx="298" cy="125" r="15" fill="#f5c578"/>
   <circle cx="352" cy="328" r="15" fill="#d9ede8"/>
-  <circle cx="406" cy="207" r="15" fill="#d9ede8"/>
+  <circle cx="406" cy="207" r="15" fill="#f5c578"/>
 </svg>

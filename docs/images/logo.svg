@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 220" role="img" aria-labelledby="title desc">
+  <title id="title">Документы встречи</title>
+  <desc id="desc">Развитая версия исходной иконки с волной речи, документом и метками говорящих</desc>
+  <defs>
+    <linearGradient id="bg" x1="80" y1="50" x2="430" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3d8075"/>
+      <stop offset="1" stop-color="#21544c"/>
+    </linearGradient>
+  </defs>
+  <rect x="6" y="6" width="208" height="208" rx="52" fill="url(#bg)"/>
+  <path d="M64 44h69l24 24v111c0 8-6 13-13 13H64c-7 0-13-5-13-13V57c0-7 6-13 13-13Z" fill="#fff" fill-opacity=".16" stroke="#e4f2ed" stroke-opacity=".42" stroke-width="3"/>
+  <path d="M133 44v21c0 4 3 6 6 6h18" fill="none" stroke="#e4f2ed" stroke-opacity=".42" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M61 151c11 0 11-66 22-66s11 83 22 83 11-103 22-103 11 83 22 83 11-49 22-49" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="61" cy="151" r="6" fill="#d9ede8"/><circle cx="83" cy="85" r="6" fill="#f5c578"/><circle cx="105" cy="168" r="6" fill="#d9ede8"/><circle cx="127" cy="65" r="6" fill="#f5c578"/><circle cx="149" cy="148" r="6" fill="#d9ede8"/><circle cx="171" cy="99" r="6" fill="#f5c578"/>
+  <text x="260" y="103" fill="#21544c" font-family="Segoe UI, Arial, sans-serif" font-size="55" font-weight="700" letter-spacing="-1">Документы</text>
+  <text x="260" y="161" fill="#3d8075" font-family="Segoe UI, Arial, sans-serif" font-size="55" font-weight="700" letter-spacing="-1">встречи</text>
+  <path d="M264 184h265" stroke="#f5c578" stroke-width="6" stroke-linecap="round"/>
+  <text x="552" y="183" fill="#63747a" font-family="Segoe UI, Arial, sans-serif" font-size="20" letter-spacing="2">РУССКАЯ РЕЧЬ · WORD · ГОВОРЯЩИЕ</text>
+</svg>
