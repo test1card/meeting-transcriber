@@ -15,8 +15,46 @@ struct LaunchResult {
     worker_pid: u32,
 }
 
+fn decode_process_output(bytes: &[u8]) -> String {
+    if let Ok(text) = std::str::from_utf8(bytes) {
+        return text.trim().to_string();
+    }
+    let (cp1251, _, _) = encoding_rs::WINDOWS_1251.decode(bytes);
+    let (cp866, _, _) = encoding_rs::IBM866.decode(bytes);
+    let score = |text: &str| {
+        let cyrillic = text
+            .chars()
+            .filter(|ch| ('А'..='я').contains(ch) || *ch == 'Ё' || *ch == 'ё')
+            .count();
+        let replacement = text.chars().filter(|ch| *ch == '\u{FFFD}').count();
+        (cyrillic, std::cmp::Reverse(replacement))
+    };
+    let chosen = if score(&cp866) > score(&cp1251) {
+        cp866
+    } else {
+        cp1251
+    };
+    chosen.trim().to_string()
+}
+fn local_app_data_dir() -> Result<PathBuf, String> {
+    if let Some(path) = dirs::data_local_dir() {
+        return Ok(path);
+    }
+    if let Some(path) = env::var_os("LOCALAPPDATA").map(PathBuf::from) {
+        if !path.as_os_str().is_empty() {
+            return Ok(path);
+        }
+    }
+    if let Some(profile) = env::var_os("USERPROFILE") {
+        let path = PathBuf::from(profile).join("AppData").join("Local");
+        return Ok(path);
+    }
+    Err("Не удалось определить локальную папку данных пользователя Windows.".to_string())
+}
+
 fn project_root() -> Result<PathBuf, String> {
-    if let Some(path) = dirs::data_local_dir()
+    if let Some(path) = local_app_data_dir()
+        .ok()
         .map(|base| base.join("MeetingDocuments").join("runtime"))
         .filter(|path| path.join("meeting_transcriber").is_dir())
     {
@@ -137,8 +175,7 @@ fn workstation_paths(app: &AppHandle) -> Result<WorkstationPaths, String> {
         (
             development_installer,
             development_root.clone(),
-            dirs::data_local_dir()
-                .ok_or_else(|| "LocalAppData is unavailable.".to_string())?
+            local_app_data_dir()?
                 .join("MeetingDocuments")
                 .join("runtime"),
         )
@@ -150,14 +187,12 @@ fn workstation_paths(app: &AppHandle) -> Result<WorkstationPaths, String> {
         (
             resources.join("workstation").join("installer"),
             resources.join("workstation").join("runtime-source"),
-            dirs::data_local_dir()
-                .ok_or_else(|| "Не найден LocalAppData.".to_string())?
+            local_app_data_dir()?
                 .join("MeetingDocuments")
                 .join("runtime"),
         )
     };
-    let state_path = dirs::data_local_dir()
-        .ok_or_else(|| "Не найден LocalAppData.".to_string())?
+    let state_path = local_app_data_dir()?
         .join("MeetingDocuments")
         .join("setup-state.json");
     if !installer_dir.join("model-catalog.json").is_file() {
@@ -186,8 +221,8 @@ fn powershell_json(script: &Path, arguments: &[String]) -> Result<Value, String>
         .output()
         .map_err(|error| format!("Не удалось запустить проверку: {error}"))?;
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let stderr = decode_process_output(&output.stderr);
+        let stdout = decode_process_output(&output.stdout);
         return Err(if !stderr.is_empty() { stderr } else { stdout });
     }
     serde_json::from_slice(&output.stdout)
@@ -338,8 +373,8 @@ fn sidecar_json(arguments: &[String]) -> Result<Value, String> {
         .output()
         .map_err(|error| format!("Не удалось запустить обработчик: {error}"))?;
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let stderr = decode_process_output(&output.stderr);
+        let stdout = decode_process_output(&output.stdout);
         return Err(if !stderr.is_empty() { stderr } else { stdout });
     }
     serde_json::from_slice(&output.stdout)

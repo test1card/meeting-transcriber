@@ -96,3 +96,25 @@ def test_parallel_setup_does_not_overwrite_the_active_setup_state() -> None:
     assert "catch [Threading.AbandonedMutexException]" in mutex_guard
     assert "exit 3" in mutex_guard
     assert 'throw "Another workstation setup process is already running."' not in mutex_guard
+
+
+def test_installer_is_profile_safe_and_reboot_resumable() -> None:
+    source = INSTALLER.read_text(encoding="utf-8-sig")
+    module = MODULE.read_text(encoding="utf-8-sig")
+    assert "Get-LocalAppDataRoot" in module
+    assert "ExpectedUserSid" in source
+    elevation = source[source.index("$needsElevation") : source.index("$needsElevation") + 700]
+    assert "ReleaseMutex()" in elevation
+    assert '$AppExecutable' in source
+    assert '"$AppExecutable" --setup' not in source
+    assert '"PAUSED_REBOOT"' in source
+
+
+def test_clean_windows_wsl_bootstrap_and_hidden_prerequisite_install() -> None:
+    source = INSTALLER.read_text(encoding="utf-8-sig")
+    assert "Enable-WindowsOptionalFeature -Online" in source
+    wsl = source[source.index("function Ensure-Wsl") : source.index("function Register-ResumeAfterReboot")]
+    assert "return $false" in wsl
+    winget = source[source.index("function Ensure-WingetPackage") : source.index("function Resolve-Uv")]
+    assert "-WindowStyle Hidden" in winget
+    assert "RedirectStandardError" in winget

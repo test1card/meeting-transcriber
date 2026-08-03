@@ -6,14 +6,16 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$OutputEncoding = [Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 Import-Module (Join-Path $PSScriptRoot "Workstation.Common.psm1") -Force
-if (-not $CatalogPath) {
+if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
     $CatalogPath = Join-Path $PSScriptRoot "model-catalog.json"
 }
-if (-not $RuntimeRoot) {
+if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
     $RuntimeRoot = Get-DefaultRuntimeRoot
 }
-if (-not $StatePath) {
+if ([string]::IsNullOrWhiteSpace($StatePath)) {
     $StatePath = Get-DefaultStatePath
 }
 
@@ -22,7 +24,6 @@ try {
         -CatalogPath $CatalogPath `
         -RuntimeRoot $RuntimeRoot `
         -StatePath $StatePath
-    [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
     $status | ConvertTo-Json -Depth 20 -Compress
 }
 catch {

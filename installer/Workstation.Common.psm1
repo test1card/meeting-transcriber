@@ -1,4 +1,4 @@
-Set-StrictMode -Version Latest
+﻿Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 function Test-Command {
@@ -34,12 +34,28 @@ function Read-JsonFile {
     }
 }
 
+function Get-LocalAppDataRoot {
+    $candidates = @()
+    try { $candidates += [Environment]::GetFolderPath("LocalApplicationData") } catch {}
+    $candidates += $env:LOCALAPPDATA
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        $candidates += [IO.Path]::Combine($env:USERPROFILE, "AppData", "Local")
+    }
+    try { $candidates += [Environment]::GetFolderPath("UserProfile") } catch {}
+    foreach ($candidate in $candidates) {
+        if (-not [string]::IsNullOrWhiteSpace([string]$candidate)) {
+            try { return [IO.Path]::GetFullPath([string]$candidate) } catch {}
+        }
+    }
+    throw "Не удалось определить локальную папку данных пользователя Windows. Проверьте профиль пользователя и переменные среды LOCALAPPDATA/USERPROFILE."
+}
+
 function Get-DefaultRuntimeRoot {
-    return Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "MeetingDocuments\runtime"
+    return [IO.Path]::Combine((Get-LocalAppDataRoot), "MeetingDocuments", "runtime")
 }
 
 function Get-DefaultStatePath {
-    return Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "MeetingDocuments\setup-state.json"
+    return [IO.Path]::Combine((Get-LocalAppDataRoot), "MeetingDocuments", "setup-state.json")
 }
 
 function Get-NvidiaProfile {
@@ -547,7 +563,7 @@ function Get-WorkstationStatus {
 }
 
 Export-ModuleMember -Function `
-    Get-DefaultRuntimeRoot, Get-DefaultStatePath, Get-HardwareProfile, `
+    Get-DefaultRuntimeRoot, Get-DefaultStatePath, Get-LocalAppDataRoot, Get-HardwareProfile, `
     Get-WorkstationStatus, Get-OllamaProfile, Test-WorkstationModelInstalled, `
     Read-JsonFile, Write-JsonAtomic, Test-Command
 

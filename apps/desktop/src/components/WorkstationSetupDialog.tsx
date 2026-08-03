@@ -196,7 +196,7 @@ export function WorkstationSetupDialog({
     (apiModels.find((model) => model.id === "deepseek-v4-flash") ??
       selectableModels[0])?.id;
   const completionNotified = useRef(false);
-  const setupActive = ["RUNNING", "PAUSED_REBOOT"].includes(
+  const setupActive = ["RUNNING"].includes(
     status?.setup.status ?? "",
   );
 
@@ -220,7 +220,7 @@ export function WorkstationSetupDialog({
     if (!pack) return;
     setStarting(true);
     setLaunchError("");
-    const retryPrevious = !editingSelection && ["PARTIAL", "FAILED"].includes(
+    const retryPrevious = !editingSelection && ["PARTIAL", "FAILED", "PAUSED_REBOOT"].includes(
       status?.setup.status ?? "",
     );
     const targetPackId = retryPrevious && status?.setup.pack_id
@@ -334,7 +334,7 @@ export function WorkstationSetupDialog({
                         </div>
                       </section>
 
-                      {!editingSelection && (setupActive || ["FAILED", "PARTIAL", "COMPLETE"].includes(status.setup.status)) ? (
+                      {!editingSelection && (setupActive || ["FAILED", "PARTIAL", "PAUSED_REBOOT", "COMPLETE"].includes(status.setup.status)) ? (
                         <section className="setup-progress-card">
                           <div className={cn("setup-progress-icon", status.setup.status.toLowerCase())}>
                             {status.setup.status === "COMPLETE" ? (
@@ -352,9 +352,11 @@ export function WorkstationSetupDialog({
                               {SETUP_STAGES[status.setup.stage] ?? status.setup.stage}
                             </span>
                             <h2>
-                              {status.setup.reboot_required
+                              {status.setup.reboot_required && !status.hardware.wsl.distro_ready
                                 ? "Нужно перезагрузить Windows"
-                                : status.setup.status === "COMPLETE"
+                                : status.setup.status === "PAUSED_REBOOT"
+                                  ? "Можно продолжить настройку"
+                                  : status.setup.status === "COMPLETE"
                                   ? "Компьютер готов к работе"
                                   : status.setup.status === "PARTIAL"
                                     ? "\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0437\u0430\u0432\u0435\u0440\u0448\u0435\u043d\u0430 \u0447\u0430\u0441\u0442\u0438\u0447\u043d\u043e"
@@ -524,7 +526,7 @@ export function WorkstationSetupDialog({
 
                   {status?.setup.status === "COMPLETE" ? (
                     <Dialog.Close asChild><Button>Готово</Button></Dialog.Close>
-                  ) : status?.setup.reboot_required ? (
+                  ) : status?.setup.reboot_required && !status?.hardware.wsl.distro_ready ? (
                     <Button disabled><RotateCw size={16} /> Перезагрузите компьютер</Button>
                   ) : (
                     <Button
@@ -533,7 +535,7 @@ export function WorkstationSetupDialog({
                       onClick={() => void beginSetup()}
                     >
                       <Download size={16} />
-                      {status?.ready ? "Установить выбранные модели" : "Установить и настроить"}
+                      {status?.setup.status === "PAUSED_REBOOT" ? "Продолжить настройку" : status?.ready ? "Установить выбранные модели" : "Установить и настроить"}
                     </Button>
                   )}
                 </footer>

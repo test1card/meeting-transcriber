@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [ValidateSet("Plan", "Install", "Verify")]
     [string]$Action = "Plan",
@@ -9,24 +9,38 @@ param(
     [string]$StatePath,
     [string]$SourceRoot,
     [string]$AppExecutable,
+    [string]$ExpectedUserSid,
     [switch]$NoElevation
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
+$OutputEncoding = [Text.UTF8Encoding]::new($false)
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 
-if (-not $CatalogPath) {
+if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
     $CatalogPath = Join-Path $PSScriptRoot "model-catalog.json"
 }
 Import-Module (Join-Path $PSScriptRoot "Workstation.Common.psm1") -Force
-if (-not $RuntimeRoot) {
+$currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+if ([string]::IsNullOrWhiteSpace($ExpectedUserSid)) {
+    $ExpectedUserSid = $currentUserSid
+}
+elseif ($currentUserSid -ne $ExpectedUserSid) {
+    $sidMismatch = $true
+}
+else {
+    $sidMismatch = $false
+}
+
+if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
     $RuntimeRoot = Get-DefaultRuntimeRoot
 }
-if (-not $StatePath) {
+if ([string]::IsNullOrWhiteSpace($StatePath)) {
     $StatePath = Get-DefaultStatePath
 }
-if (-not $SourceRoot) {
+if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
     $SourceRoot = Split-Path -Parent $PSScriptRoot
 }
 
@@ -112,7 +126,8 @@ function Start-ElevatedCopy {
         "-CatalogPath", (Quote-ProcessArgument $CatalogPath),
         "-RuntimeRoot", (Quote-ProcessArgument $RuntimeRoot),
         "-StatePath", (Quote-ProcessArgument $StatePath),
-        "-SourceRoot", (Quote-ProcessArgument $SourceRoot)
+        "-SourceRoot", (Quote-ProcessArgument $SourceRoot),
+        "-ExpectedUserSid", (Quote-ProcessArgument $ExpectedUserSid)
     )
     if ($selectedIds.Count) {
         $arguments += @("-ModelIds", (Quote-ProcessArgument (@($selectedIds) -join ",")))
@@ -210,27 +225,37 @@ function Ensure-WingetPackage {
         return
     }
     if (-not (Test-Command "winget.exe")) {
-        throw "Windows Package Manager (winget) is required."
+        throw "Не найден $CommandName и недоступен winget. Установите Windows App Installer (winget), FFmpeg/uv/Ollama вручную, затем повторите запуск."
     }
-    & winget.exe install `
-        --id $PackageId `
-        --exact `
-        --silent `
-        --accept-source-agreements `
-        --accept-package-agreements `
-        --disable-interactivity
-    if ($LASTEXITCODE -ne 0) {
-        throw "winget failed to install $PackageId (exit $LASTEXITCODE)."
+    $stdout = Join-Path ([IO.Path]::GetTempPath()) ("meeting-documents-winget-" + [Guid]::NewGuid().ToString("N") + ".out")
+    $stderr = Join-Path ([IO.Path]::GetTempPath()) ("meeting-documents-winget-" + [Guid]::NewGuid().ToString("N") + ".err")
+    try {
+        $arguments = @("install", "--id", $PackageId, "--exact", "--silent", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity")
+        $process = Start-Process -FilePath "winget.exe" -ArgumentList $arguments -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        if ($process.ExitCode -ne 0) {
+            $detail = if (Test-Path -LiteralPath $stderr) { (Get-Content -Raw -LiteralPath $stderr -ErrorAction SilentlyContinue).Trim() } else { "" }
+            if ([string]::IsNullOrWhiteSpace($detail) -and (Test-Path -LiteralPath $stdout)) { $detail = (Get-Content -Raw -LiteralPath $stdout -ErrorAction SilentlyContinue).Trim() }
+            throw "winget не смог установить $PackageId (код $($process.ExitCode)). $detail"
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
     }
     Update-ProcessPath
+    if (-not (Test-Command $CommandName)) {
+        throw "Пакет $PackageId установлен, но команда $CommandName не найдена в PATH. Перезапустите приложение или добавьте каталог программы в PATH."
+    }
 }
 
 function Resolve-Uv {
     Update-ProcessPath
     $command = Get-Command "uv.exe" -ErrorAction SilentlyContinue
     if ($command) { return $command.Source }
-    $fallback = Join-Path $env:USERPROFILE ".local\bin\uv.exe"
-    if (Test-Path -LiteralPath $fallback) { return $fallback }
+    $fallback = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:USERPROFILE)) {
+        $fallback = Join-Path $env:USERPROFILE ".local\bin\uv.exe"
+    }
+    if ($fallback -and (Test-Path -LiteralPath $fallback)) { return $fallback }
     throw "uv.exe was installed but cannot be found."
 }
 
@@ -301,24 +326,40 @@ function Invoke-UvInstall {
 }
 
 function Ensure-Wsl {
+    if (-not (Test-Command "wsl.exe")) {
+        try {
+            Enable-WindowsOptionalFeature -Online -FeatureName @("Microsoft-Windows-Subsystem-Linux", "VirtualMachinePlatform") -All -NoRestart -ErrorAction Stop | Out-Null
+        }
+        catch {
+            throw "Не удалось включить компоненты WSL2. Запустите установщик от администратора и проверьте, что виртуализация включена в BIOS/UEFI."
+        }
+        Update-ProcessPath
+    }
+    if (-not (Test-Command "wsl.exe")) {
+        return $false
+    }
     $profile = Get-HardwareProfile -RuntimeRoot $RuntimeRoot
     if ($profile.wsl.distro_ready) {
-        return $true
+        & wsl.exe -d Ubuntu-22.04 -- true 2>$null
+        return ($LASTEXITCODE -eq 0)
     }
     & wsl.exe --install -d Ubuntu-22.04 --no-launch --web-download
     $code = $LASTEXITCODE
     if ($code -ne 0 -and $code -ne 3010) {
-        throw "WSL installation failed (exit $code)."
+        throw "Не удалось установить WSL2/Ubuntu-22.04 (код $code). Включите виртуализацию и компонент WSL в Windows, затем повторите запуск."
     }
     $profile = Get-HardwareProfile -RuntimeRoot $RuntimeRoot
-    return [bool]$profile.wsl.distro_ready
+    if (-not $profile.wsl.distro_ready) {
+        return $false
+    }
+    & wsl.exe -d Ubuntu-22.04 -- true 2>$null
+    return ($LASTEXITCODE -eq 0)
 }
-
 function Register-ResumeAfterReboot {
     if (-not $AppExecutable) {
         return
     }
-    $command = '"' + $AppExecutable + '" --setup'
+    $command = '"' + $AppExecutable + '"'
     New-ItemProperty `
         -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce" `
         -Name "MeetingDocumentsSetup" `
@@ -431,8 +472,11 @@ snapshot_download(repo_id=sys.argv[3], revision=sys.argv[4], cache_dir=root / "a
 function Ensure-OllamaRunning {
     $ollama = Get-Command "ollama.exe" -ErrorAction SilentlyContinue
     if (-not $ollama) {
-        $fallback = Join-Path $env:LOCALAPPDATA "Programs\Ollama\ollama.exe"
-        if (Test-Path -LiteralPath $fallback) {
+        $fallback = $null
+        if (-not [string]::IsNullOrWhiteSpace($env:LOCALAPPDATA)) {
+            $fallback = Join-Path $env:LOCALAPPDATA "Programs\Ollama\ollama.exe"
+        }
+        if ($fallback -and (Test-Path -LiteralPath $fallback)) {
             $ollama = Get-Item -LiteralPath $fallback
         }
     }
@@ -521,25 +565,33 @@ try {
         exit 3
     }
 
+    if ($sidMismatch) {
+        throw "Установка должна выполняться под той же учётной записью Windows, которая запустила приложение. Не выбирайте другую администраторскую учётную запись в окне UAC."
+    }
+
     $needsElevation = -not $hardware.wsl.distro_ready
     if ($needsElevation -and -not (Test-Administrator) -and -not $NoElevation) {
         Update-State `
             -Stage "requesting_admin" `
             -Progress 0.02 `
             -Message "Waiting for administrator approval"
+        if ($ownsMutex) {
+            $mutex.ReleaseMutex()
+            $ownsMutex = $false
+        }
         Start-ElevatedCopy
         exit 0
     }
 
+    if (-not $hardware.os.supported) {
+        throw "Поддерживаются только Windows 10 (сборка 19041+) и Windows 11."
+    }
+    $localModels = @($selectedModels | Where-Object { $_.provider -notmatch "-api$" })
+    if ($localModels.Count -gt 0 -and (-not $hardware.nvidia.available -or -not $hardware.nvidia.cuda_visible)) {
+        throw "Для выбранных локальных моделей нужна NVIDIA-видеокарта с рабочим драйвером CUDA. Установка остановлена до загрузки больших файлов."
+    }
     if ($hardware.disk.free_gb -lt ([double]$pack.estimated_installed_gb + 8)) {
         throw "Insufficient free disk space. Keep at least 8 GB beyond the selected pack estimate."
-    }
-
-    Update-State -Stage "prerequisites" -Progress 0.05 -Message "Checking Windows prerequisites"
-    Ensure-WingetPackage -CommandName "ffprobe" -PackageId "Gyan.FFmpeg"
-    Ensure-WingetPackage -CommandName "uv" -PackageId "astral-sh.uv"
-    if (@($selectedModels | Where-Object provider -eq "ollama").Count) {
-        Ensure-WingetPackage -CommandName "ollama" -PackageId "Ollama.Ollama"
     }
 
     Update-State -Stage "wsl" -Progress 0.12 -Message "Checking WSL2 and Ubuntu 22.04"
@@ -553,6 +605,14 @@ try {
             -Status "PAUSED_REBOOT" `
             -RebootRequired $true
         exit 0
+    }
+
+
+    Update-State -Stage "prerequisites" -Progress 0.15 -Message "Checking Windows prerequisites"
+    Ensure-WingetPackage -CommandName "ffprobe" -PackageId "Gyan.FFmpeg"
+    Ensure-WingetPackage -CommandName "uv" -PackageId "astral-sh.uv"
+    if (@($selectedModels | Where-Object provider -eq "ollama").Count) {
+        Ensure-WingetPackage -CommandName "ollama" -PackageId "Ollama.Ollama"
     }
 
     Update-State -Stage "runtime_source" -Progress 0.18 -Message "Installing application runtime files"
