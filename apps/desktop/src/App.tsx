@@ -52,7 +52,7 @@ export function App() {
   const [systemError, setSystemError] = useState("");
   const [inputPath, setInputPath] = useState("");
   const [outputRoot, setOutputRoot] = useState("");
-  const [mode, setMode] = useState<ProcessingMode>("deepseek");
+  const [mode, setMode] = useState<ProcessingMode>("local");
   const [helpOpen, setHelpOpen] = useState(false);
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [workstation, setWorkstation] = useState<WorkstationStatus | null>(null);
@@ -61,7 +61,7 @@ export function App() {
   const [checkingWorkstation, setCheckingWorkstation] = useState(false);
   const [checkingSystem, setCheckingSystem] = useState(false);
   const [consentRemembered, setConsentRemembered] = useState(() => localStorage.getItem(CONSENT_STORAGE) === "yes");
-  const [model, setModel] = useState("deepseek-v4-flash");
+  const [model, setModel] = useState("gemma4:12b");
   const [speakerMode, setSpeakerMode] = useState<"auto" | "known">("auto");
   const [speakerCount, setSpeakerCount] = useState(4);
   const [jobDir, setJobDir] = useState(
@@ -91,13 +91,6 @@ export function App() {
     try {
       const nextSystem = await getSystemStatus(startOllama);
       setSystem(nextSystem);
-      if (!nextSystem.deepseek_configured) {
-        setMode("local");
-        const preferred = ["gemma4:12b", "gemma4:26b", "gemma4:e4b"]
-          .find((name) => nextSystem.ollama_models.includes(name))
-          ?? nextSystem.ollama_models.find((name) => !/embed/i.test(name));
-        if (preferred) setModel(preferred);
-      }
     } catch (error) {
       setSystemError(normalizeError(error));
     } finally {
@@ -203,8 +196,7 @@ export function App() {
       system.nvidia &&
       system.windows_python &&
       system.docs_python &&
-      system.moss_python &&
-      system.qwen_python,
+      system.moss_python,
   );
 
   function changeMode(next: ProcessingMode) {

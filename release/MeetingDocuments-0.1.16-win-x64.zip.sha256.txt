@@ -1,1 +1,1 @@
-204569d0205968696c12e493676305828f64f142f01a2caaf05ab57d063fc27a  MeetingDocuments-0.1.16-win-x64.zip
+38ec0cd9fc02f210e53f0c8abf60989fa05c0ee36f4c18ef753ad1bcddf59a6a  MeetingDocuments-0.1.16-win-x64.zip
