@@ -1719,7 +1719,7 @@ dependencies = [
 
 [[package]]
 name = "meeting-documents"
-version = "0.1.13"
+version = "0.1.14"
 dependencies = [
  "dirs",
  "encoding_rs",
