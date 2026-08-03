@@ -1,6 +1,6 @@
 [package]
 name = "meeting-documents"
-version = "0.1.14"
+version = "0.1.15"
 description = "Russian meeting transcription and document preparation"
 authors = ["Meeting Documents"]
 license = "MIT"

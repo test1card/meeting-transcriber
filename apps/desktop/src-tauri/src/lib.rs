@@ -381,9 +381,28 @@ fn sidecar_json(arguments: &[String]) -> Result<Value, String> {
         .map_err(|error| format!("Обработчик вернул некорректный ответ: {error}"))
 }
 
+fn unconfigured_system_status() -> Value {
+    serde_json::json!({
+        "project_root": "",
+        "ffmpeg": false,
+        "wsl": false,
+        "nvidia": false,
+        "ollama": false,
+        "ollama_installed": false,
+        "ollama_models": [],
+        "deepseek_configured": env::var("DEEPSEEK_API_KEY").map(|value| !value.trim().is_empty()).unwrap_or(false),
+        "windows_python": false,
+        "docs_python": false,
+        "moss_python": false,
+        "qwen_python": false
+    })
+}
 #[tauri::command(rename_all = "camelCase")]
 async fn system_status(start_ollama: Option<bool>) -> Result<Value, String> {
     tauri::async_runtime::spawn_blocking(move || {
+        if project_root().is_err() {
+            return Ok(unconfigured_system_status());
+        }
         let mut arguments = vec!["system-status".to_string()];
         if start_ollama.unwrap_or(false) {
             arguments.push("--start-ollama".to_string());

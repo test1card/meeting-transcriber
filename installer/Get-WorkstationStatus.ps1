@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [string]$CatalogPath,
     [string]$RuntimeRoot,
@@ -7,10 +7,17 @@ param(
 
 $ErrorActionPreference = "Stop"
 $OutputEncoding = [Text.UTF8Encoding]::new($false)
+$scriptRoot = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+}
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+    throw "Не удалось определить каталог установщика PowerShell."
+}
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
-Import-Module (Join-Path $PSScriptRoot "Workstation.Common.psm1") -Force
+Import-Module (Join-Path $scriptRoot "Workstation.Common.psm1") -Force
 if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
-    $CatalogPath = Join-Path $PSScriptRoot "model-catalog.json"
+    $CatalogPath = Join-Path $scriptRoot "model-catalog.json"
 }
 if ([string]::IsNullOrWhiteSpace($RuntimeRoot)) {
     $RuntimeRoot = Get-DefaultRuntimeRoot

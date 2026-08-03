@@ -191,15 +191,22 @@ function Get-WslProfile {
     $distros = @()
     $available = Test-Command "wsl.exe"
     if ($available) {
+        $stdout = Join-Path ([IO.Path]::GetTempPath()) ("meeting-documents-wsl-" + [Guid]::NewGuid().ToString("N") + ".out")
+        $stderr = Join-Path ([IO.Path]::GetTempPath()) ("meeting-documents-wsl-" + [Guid]::NewGuid().ToString("N") + ".err")
         try {
-            $distros = @(
-                & wsl.exe --list --quiet 2>$null |
-                ForEach-Object { ($_ -replace "`0", "").Trim() } |
-                Where-Object { $_ }
-            )
+            $process = Start-Process -FilePath "wsl.exe" -ArgumentList @("--list", "--quiet") -WindowStyle Hidden -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+            if ($process.WaitForExit(5000)) {
+                $distros = @(Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue | ForEach-Object { ($_ -replace [char]0, "").Trim() } | Where-Object { $_ })
+            }
+            else {
+                try { $process.Kill() } catch {}
+            }
         }
         catch {
             $distros = @()
+        }
+        finally {
+            Remove-Item -LiteralPath $stdout,$stderr -Force -ErrorAction SilentlyContinue
         }
     }
     return [pscustomobject]@{
@@ -208,7 +215,6 @@ function Get-WslProfile {
         distros = $distros
     }
 }
-
 function Get-OllamaProfile {
     $installed = (Test-Command "ollama.exe") -or (Test-Command "ollama")
     $running = $false

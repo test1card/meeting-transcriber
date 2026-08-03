@@ -17,12 +17,19 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 $OutputEncoding = [Text.UTF8Encoding]::new($false)
+$scriptRoot = $PSScriptRoot
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+    $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
+}
+if ([string]::IsNullOrWhiteSpace($scriptRoot)) {
+    throw "Не удалось определить каталог установщика PowerShell."
+}
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 
 if ([string]::IsNullOrWhiteSpace($CatalogPath)) {
-    $CatalogPath = Join-Path $PSScriptRoot "model-catalog.json"
+    $CatalogPath = Join-Path $scriptRoot "model-catalog.json"
 }
-Import-Module (Join-Path $PSScriptRoot "Workstation.Common.psm1") -Force
+Import-Module (Join-Path $scriptRoot "Workstation.Common.psm1") -Force
 $currentUserSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
 if ([string]::IsNullOrWhiteSpace($ExpectedUserSid)) {
     $ExpectedUserSid = $currentUserSid
@@ -41,7 +48,7 @@ if ([string]::IsNullOrWhiteSpace($StatePath)) {
     $StatePath = Get-DefaultStatePath
 }
 if ([string]::IsNullOrWhiteSpace($SourceRoot)) {
-    $SourceRoot = Split-Path -Parent $PSScriptRoot
+    $SourceRoot = Split-Path -Parent $scriptRoot
 }
 
 $catalog = Get-Content -Raw -Encoding UTF8 -LiteralPath $CatalogPath | ConvertFrom-Json
@@ -518,7 +525,7 @@ function Install-OllamaModel {
 }
 
 function Verify-Installation {
-    $statusScript = Join-Path $PSScriptRoot "Get-WorkstationStatus.ps1"
+    $statusScript = Join-Path $scriptRoot "Get-WorkstationStatus.ps1"
     $json = & powershell.exe `
         -NoProfile `
         -ExecutionPolicy Bypass `
