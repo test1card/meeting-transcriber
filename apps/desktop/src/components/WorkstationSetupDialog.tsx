@@ -32,6 +32,7 @@ import type {
 import { Button, StatusDot, cn } from "./ui";
 
 const PACK_ORDER = [
+  "deepseek-8gb",
   "deepseek-production",
   "local-efficient",
   "local-proven",
@@ -66,6 +67,7 @@ const SETUP_STAGES: Record<string, string> = {
 };
 
 function packBadge(pack: WorkstationPack) {
+  if (pack.id === "deepseek-8gb") return "Лучший вариант для 8 ГБ VRAM";
   if (pack.id === "deepseek-production") return "Лучшее качество через API";
   if (pack.id === "local-efficient") return "Рекомендуемый локальный вариант";
   if (pack.id === "local-proven") return "Только черновик";
@@ -73,6 +75,7 @@ function packBadge(pack: WorkstationPack) {
 }
 
 function packIcon(pack: WorkstationPack) {
+  if (pack.id === "deepseek-8gb") return <Cloud size={20} />;
   if (pack.id === "deepseek-production") return <Cloud size={20} />;
   if (pack.id === "local-efficient") return <Zap size={20} />;
   if (pack.id === "local-proven") return <ShieldCheck size={20} />;
@@ -158,6 +161,7 @@ export function WorkstationSetupDialog({
 }) {
   const [packId, setPackId] = useState("local-efficient");
   const [choiceByPack, setChoiceByPack] = useState<Record<string, string>>({
+    "deepseek-8gb": "deepseek-v4-flash",
     "deepseek-production": "deepseek-v4-flash",
     "local-efficient": "gemma4-12b",
   });
@@ -199,6 +203,17 @@ export function WorkstationSetupDialog({
   const setupActive = ["RUNNING"].includes(
     status?.setup.status ?? "",
   );
+
+
+  useEffect(() => {
+    if (status?.hardware_class?.id !== "gpu-8") return;
+    if (!packs.some((item) => item.id === "deepseek-8gb")) return;
+    setPackId((current) =>
+      current === "local-efficient" || !packs.some((item) => item.id === current)
+        ? "deepseek-8gb"
+        : current,
+    );
+  }, [packs, status?.hardware_class?.id]);
 
   useEffect(() => {
     if (!open || !setupActive) return;

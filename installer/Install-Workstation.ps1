@@ -649,19 +649,22 @@ try {
     Invoke-UvInstall `
         -Uv $uv `
         -Python $mossPython `
-        -Packages @("-e", (Join-Path $RuntimeRoot "vendor\MOSS-Transcribe-Diarize"))
+        -Packages @("-e", (Join-Path $RuntimeRoot "vendor\MOSS-Transcribe-Diarize"), "speechbrain==1.1.0", "scikit-learn", "av", "scipy")
 
-    $qwenPython = Ensure-Venv -Uv $uv -Name ".venv-qwen"
-    Invoke-UvInstall `
-        -Uv $uv `
-        -Python $qwenPython `
-        -Packages @("torch", "torchaudio") `
-        -IndexUrl "https://download.pytorch.org/whl/cu128"
-    Invoke-UvInstall `
-        -Uv $uv `
-        -Python $qwenPython `
-        -Packages @("qwen-asr==0.0.6", "speechbrain==1.1.0")
-
+    $qwenPython = $null
+    $qwenSelected = @($selectedModels | Where-Object { $_.id -eq "qwen3-asr-1.7b-aligner" }).Count -gt 0
+    if ($qwenSelected) {
+        $qwenPython = Ensure-Venv -Uv $uv -Name ".venv-qwen"
+        Invoke-UvInstall `
+            -Uv $uv `
+            -Python $qwenPython `
+            -Packages @("torch", "torchaudio") `
+            -IndexUrl "https://download.pytorch.org/whl/cu128"
+        Invoke-UvInstall `
+            -Uv $uv `
+            -Python $qwenPython `
+            -Packages @("qwen-asr==0.0.6", "speechbrain==1.1.0")
+    }
     Update-State -Stage "wsl_runtime" -Progress 0.48 -Message "Installing WhisperX runtime in WSL"
     Ensure-WslRuntime
 
@@ -724,8 +727,10 @@ try {
     Update-State -Stage "verification" -Progress 0.94 -Message "Verifying CUDA, models, and Word export"
     & $mossPython -c "import torch; assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0))"
     if ($LASTEXITCODE -ne 0) { throw "MOSS CUDA verification failed." }
-    & $qwenPython -c "import torch, qwen_asr, speechbrain; assert torch.cuda.is_available()"
-    if ($LASTEXITCODE -ne 0) { throw "Qwen CUDA verification failed." }
+    if ($qwenPython) {
+        & $qwenPython -c "import torch, qwen_asr, speechbrain; assert torch.cuda.is_available()"
+        if ($LASTEXITCODE -ne 0) { throw "Qwen CUDA verification failed." }
+    }
     & $docsPython -c "import docx, lxml"
     if ($LASTEXITCODE -ne 0) { throw "DOCX environment verification failed." }
     & wsl.exe -d Ubuntu-22.04 -- /opt/meeting-documents/venv/bin/python -c `

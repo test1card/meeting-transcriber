@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
     [string]$MossTranscript,
@@ -12,6 +12,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 $python = Join-Path $PSScriptRoot ".venv-qwen\Scripts\python.exe"
+if (-not (Test-Path -LiteralPath $python)) {
+    $python = Join-Path $PSScriptRoot ".venv-moss\Scripts\python.exe"
+}
 $arguments = @(
     (Join-Path $PSScriptRoot "scripts\cluster_moss_speakers.py"),
     (Resolve-Path -LiteralPath $MossTranscript).Path,

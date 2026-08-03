@@ -89,10 +89,10 @@
       "min_free_disk_gb": 40,
       "recommended_free_disk_gb": 70,
       "min_gpu_count": 1,
-      "speech_capability": "partial_or_reduced_chunks",
-      "local_text_ceiling": "compact",
-      "recommended_pack_ids": [],
-      "recommendation": "MOSS и WhisperX работают последовательно; полный обязательный Qwen-проход не гарантирован. Не рекомендовать как готовую финальную станцию без отдельного облегчённого профиля."
+      "speech_capability": "full_sequential_with_offload",
+      "local_text_ceiling": "e4b_offload",
+      "recommended_pack_ids": ["deepseek-8gb"],
+      "recommendation": "Для компьютеров с 6–8 ГБ VRAM и 64 ГБ RAM: DeepSeek API для текста, MOSS + ECAPA + WhisperX локально. Qwen и локальная редактура можно добавить отдельно, но они будут работать с выгрузкой в RAM."
     },
     {
       "id": "resource-12",
@@ -201,7 +201,7 @@
       "min_vram_gb": 6,
       "max_vram_gb": 8,
       "min_ram_gb": 32,
-      "recommendation": "MOSS и Whisper; Qwen может потребовать уменьшенные чанки. Локальная редактура — компактная модель."
+      "recommendation": "Рекомендуется 8 ГБ online-профиль: DeepSeek API для текста, MOSS + ECAPA + WhisperX локально; Qwen и локальная редактура остаются отдельными offload-опциями."
     },
     {
       "id": "gpu-12",
@@ -237,6 +237,25 @@
     }
   ],
   "packs": [
+    {
+      "id": "deepseek-8gb",
+      "label": "8 ГБ VRAM — DeepSeek API и offload",
+      "description": "Надёжный онлайн-профиль для 6–8 ГБ VRAM и 64 ГБ RAM: локально MOSS, ECAPA и WhisperX с обязательным разделением говорящих; текстовые документы готовит DeepSeek API.",
+      "required_model_ids": [
+        "moss-transcribe-diarize-0.9b",
+        "ecapa-voxceleb",
+        "whisperx-large-v3-ru"
+      ],
+      "optional_model_ids": [],
+      "api_model_ids": [
+        "deepseek-v4-pro",
+        "deepseek-v4-flash"
+      ],
+      "estimated_download_gb": 7.1,
+      "estimated_installed_gb": 16.0,
+      "default_for_profiles": ["gpu-8"]
+    },
+
     {
       "id": "deepseek-production",
       "label": "Максимум качества через API",
@@ -356,7 +375,7 @@
       "efficiency_tier": "very-high",
       "production_status": "validated_pipeline",
       "selectable": false,
-      "install_environment": "qwen",
+      "install_environment": "moss",
       "rationale": "Связывает локальные метки MOSS между чанками; не определяет реальные имена людей.",
       "sources": [
         "https://huggingface.co/speechbrain/spkrec-ecapa-voxceleb"

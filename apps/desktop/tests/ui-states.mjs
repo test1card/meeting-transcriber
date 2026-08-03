@@ -317,7 +317,7 @@ try {
       await page.getByRole("heading", { name: "Подготовка компьютера" }).waitFor();
       await page.getByText("13–19 ГБ VRAM", { exact: true }).waitFor();
       const packCards = await page.locator(".pack-card").count();
-      if (packCards !== 4) failures.push(`setup: expected 4 pack cards, got ${packCards}`);
+      if (packCards !== 5) failures.push(`setup: expected 5 pack cards, got ${packCards}`);
       await page.screenshot({ path: path.join(resultRoot, "workstation-setup.png"), fullPage: true });
       await page.getByRole("button", { name: "Закрыть" }).first().click();
     }

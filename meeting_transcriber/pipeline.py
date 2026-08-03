@@ -537,22 +537,30 @@ def _run_job_locked(job_dir: Path) -> int:
         _complete_stage(job_dir, "CLUSTERING_SPEAKERS", "Говорящие объединены")
 
         qwen = job_dir / "stages" / "qwen"
-        if not _transcript_complete(qwen / "transcript.json"):
-            _set_stage(job_dir, "TRANSCRIBING_QWEN", "Qwen делает независимую расшифровку")
-            _run_command(
+        qwen_python = PROJECT_ROOT / ".venv-qwen" / "Scripts" / "python.exe"
+        qwen_enabled = qwen_python.is_file()
+        if qwen_enabled:
+            if not _transcript_complete(qwen / "transcript.json"):
+                _set_stage(job_dir, "TRANSCRIBING_QWEN", "Qwen делает независимую расшифровку")
+                _run_command(
+                    job_dir,
+                    "TRANSCRIBING_QWEN",
+                    _powershell_script(
+                        "run-qwen-checkpointed.ps1",
+                        str(input_path),
+                        "-OutputDirectory",
+                        str(qwen),
+                    ),
+                    log_name="qwen.log",
+                    progress_reader=lambda: _progress_from_file(qwen / "progress.json"),
+                )
+            _complete_stage(job_dir, "TRANSCRIBING_QWEN", "Qwen завершён, части сохранены")
+        else:
+            _complete_stage(
                 job_dir,
                 "TRANSCRIBING_QWEN",
-                _powershell_script(
-                    "run-qwen-checkpointed.ps1",
-                    str(input_path),
-                    "-OutputDirectory",
-                    str(qwen),
-                ),
-                log_name="qwen.log",
-                progress_reader=lambda: _progress_from_file(qwen / "progress.json"),
+                "Qwen пропущен: для профиля 8 ГБ достаточно MOSS и WhisperX",
             )
-        _complete_stage(job_dir, "TRANSCRIBING_QWEN", "Qwen завершён, части сохранены")
-
         if provider == "ollama":
             subprocess.run(
                 _powershell_script("scripts/Start-Ollama.ps1"),
@@ -567,16 +575,26 @@ def _run_job_locked(job_dir: Path) -> int:
         python = _windows_python(".venv-win")
         consensus = job_dir / "stages" / "consensus"
         if not _transcript_complete(consensus / "transcript.json"):
-            _set_stage(job_dir, "ADJUDICATING", "Модель сверяет три варианта текста")
+            transcript_paths = [
+                str(speakers / "transcript.json"),
+                str(whisper / "transcript.json"),
+            ]
+            transcript_labels = ["moss", "whisperx"]
+            if qwen_enabled and _transcript_complete(qwen / "transcript.json"):
+                transcript_paths.insert(1, str(qwen / "transcript.json"))
+                transcript_labels.insert(1, "qwen")
+            _set_stage(
+                job_dir,
+                "ADJUDICATING",
+                "Модель сверяет варианты расшифровки и временные метки",
+            )
             command = [
                 str(python),
                 "-m",
                 "meeting_transcriber.consensus_cli",
-                str(speakers / "transcript.json"),
-                str(qwen / "transcript.json"),
-                str(whisper / "transcript.json"),
+                *transcript_paths,
                 "--labels",
-                "moss,qwen,whisperx",
+                ",".join(transcript_labels),
                 "--anchor",
                 "moss",
                 "--output",

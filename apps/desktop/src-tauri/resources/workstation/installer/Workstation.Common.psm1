@@ -457,6 +457,8 @@ function Get-WorkstationStatus {
     $ollama = Get-OllamaProfile
     $hardwareClass = Resolve-ResourceTier -Catalog $catalog -Hardware $hardware
 
+    $qwenRequired = [double]$hardware.nvidia.largest_single_gpu_vram_gb -ge 10.5
+
     $components = @(
         [pscustomobject]@{ id = "windows"; label = "Windows version"; required = $true; ready = [bool]$hardware.os.supported; detail = "Windows 10 build 19041+ or Windows 11" },
         [pscustomobject]@{ id = "nvidia"; label = "NVIDIA and CUDA"; required = $true; ready = [bool]$hardware.nvidia.available; detail = if ($hardware.nvidia.available) { "$($hardware.nvidia.name), $($hardware.nvidia.vram_gb) GB" } else { "Compatible NVIDIA GPU not detected" } },
@@ -466,7 +468,7 @@ function Get-WorkstationStatus {
         [pscustomobject]@{ id = "python-core"; label = "Core Python"; required = $true; ready = (Test-PythonEnvironment $RuntimeRoot ".venv-win"); detail = "Orchestration and DeepSeek" },
         [pscustomobject]@{ id = "python-docs"; label = "Word exporter"; required = $true; ready = (Test-PythonEnvironment $RuntimeRoot ".venv-docs"); detail = "Four DOCX outputs" },
         [pscustomobject]@{ id = "python-moss"; label = "MOSS runtime"; required = $true; ready = (Test-PythonEnvironment $RuntimeRoot ".venv-moss"); detail = "Speech, timestamps, and speakers" },
-        [pscustomobject]@{ id = "python-qwen"; label = "Qwen/ECAPA runtime"; required = $true; ready = (Test-PythonEnvironment $RuntimeRoot ".venv-qwen"); detail = "Independent STT and global speakers" },
+        [pscustomobject]@{ id = "python-qwen"; label = "Qwen/ECAPA runtime"; required = $qwenRequired; ready = (Test-PythonEnvironment $RuntimeRoot ".venv-qwen"); detail = if ($qwenRequired) { "Independent STT and global speakers" } else { "Не требуется для профиля 8 ГБ" } },
         [pscustomobject]@{ id = "ollama"; label = "Ollama"; required = $false; ready = [bool]$ollama.installed; detail = if ($ollama.installed) { "$($ollama.models.Count) models installed" } else { "Required only for fully local mode" } }
     )
 
